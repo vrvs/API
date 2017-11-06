@@ -14,11 +14,7 @@ def save(path = "stopwords/stopwords.json"):
         json.dump(_sw, fileOut)
         fileOut.close()
 
-def __call__():
-    print("CALL")
-
-class stopword:
-    def __init__(self):
-        print('class')
+def contains(word):
+    
 
 

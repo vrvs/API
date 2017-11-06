@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 def tokenize(text):
     tokens = text.split()
     return tokens
