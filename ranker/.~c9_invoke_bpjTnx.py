@@ -57,7 +57,6 @@ fileRecoveredNumber = 50
 query = ["cat","bad","cat","bad"]
 
 text2 = "cat is so cute. cat is sad."
-#        012345678901234567890123456
 invertedFile2 = {"size": 4, "invertedFile": {"cat":[0,16],"cute":[10],"sad":[23]}}
 
 
