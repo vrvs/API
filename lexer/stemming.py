@@ -1,6 +1,6 @@
 import importlib
 
-_stem = None
+_stem = lambda _ : ""
 
 def load(algo = 'potter2'):
     global _stem
