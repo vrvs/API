@@ -1,5 +1,3 @@
-# encoding: utf-8
-
 def tokenize(text):
     tokens = text.split()
     return tokens
@@ -15,3 +13,6 @@ def normalize(text):
     text = text.replace("'", '')
     text = text.lower()
     return text
+
+def lemmatize(text):
+    print('Still not implemented, important to semantic analasys! ;-)')

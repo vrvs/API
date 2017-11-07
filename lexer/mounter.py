@@ -12,4 +12,3 @@ ds = set(words)
 with open("stopwords/stopwords.json", 'w') as fileOut:
     json.dump(list(ds), fileOut)
     fileOut.close()
-    

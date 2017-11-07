@@ -15,11 +15,9 @@ def save(path = "lexer/dictionaries/alphanumeric.json"):
         json.dump(words, fileOut)
         fileOut.close()
 
-def transform(query):
-    newQuery = []
-    for word in query:
-        if word in _ortho:
-            newQuery.append(word)
+def convert(query):
+    func = lambda x : x not in _ortho
+    newQuery = filter(func, query)
     return newQuery
 
 def contains(word):

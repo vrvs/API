@@ -16,10 +16,8 @@ def save(path = "lexer/stopwords/stopwords.json"):
         fileOut.close()
 
 def transform(query):
-    newQuery = []
-    for word in query:
-        if word not in _sw:
-            newQuery.append(word)
+    func = lambda x : x not in _sw
+    newQuery = filter(func, query)
     return newQuery
 
 def contains(word):
