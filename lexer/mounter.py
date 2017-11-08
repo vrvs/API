@@ -12,6 +12,7 @@ for carac in ls:
     aux1 = {}
     aux2 = {}
     aux3 = {}
+    aux4 = {}
 
     keysWords= thesaurus.keys()
     
@@ -24,19 +25,23 @@ for carac in ls:
                 dictCtx = dictWord.get(key1)
         
                 if isinstance(dictCtx, dict): 
-                    if dictCtx.has_key("synonyms"):
-                        synonyms = dictCtx["synonyms"]
+                    ctxKeys = dictCtx.keys()
+                    
+                    for key2 in ctxKeys:
+                        synonyms = dictCtx[key2]
                         synonymsKeys = synonyms.keys()
             
-                        for key2 in synonymsKeys:
-                            i = synonyms.get(key2)
-                            aux3.setdefault(i, [])
-                            aux3[i].append(key2)
-                        aux2.update({key1:aux3})
-                        aux3 = {}
-                        #print aux2
+                        for key3 in synonymsKeys:
+                            i = synonyms.get(key3)
+                            aux4.setdefault(i, [])
+                            aux4[i].append(key3)
+                        aux3.update({key2:aux4})
+                        aux4 = {}
+                        synonyms.clear()
+                    #print aux2
+                    aux2.update({key1:aux3})
+                    aux3 = {}
                     dictCtx.clear()
-                    synonyms.clear()
                 else:
                     aux2.update({key1:dictCtx})
         aux1.update({key:aux2})
