@@ -1,4 +1,6 @@
+# encoding: utf-8
 import math
+import sys
 
 # function that returns the tdidf weight of a document
 def weightFileTDIDF(word, text, invertedFile, fileTotalNumber, fileRecoveredNumber):
@@ -44,23 +46,189 @@ def removeDuplicates(query):
            result.append(q)
     return result
 
+# function that calculates the cossine between two vectors
+# It was did because I needed to use Vector Space Model to do my tests
+def cos(vector1, vector2):
+    l = range(0,len(vector1))
+    num = 0
+    for i in l:
+        num += (vector1[i] * vector2[i])
+    vector1 = map(lambda x: x ** 2, vector1)
+    vector2 = map(lambda x: x ** 2, vector2)
+    x1 = sum(vector1)
+    x2 = sum(vector2)
+    x1 = math.sqrt(x1)
+    x2 = math.sqrt(x2)
+    den = x1*x2
+    if den == 0:
+        return 0
+    return num/den
+
+###############################################################################
+# here is a method using term proximity thought by Valdemiro. I didn't find any 
+# place that do the same. Maybe there is but not sure
+# Based in a method that uses Vector Space Model and Term Proximity and 
+# calculates a matrix with distance between terms
+# I thought that do the sum between this distances could be a nice heuristic
+# that returns a good result (need to be validated by Lucas Rufino to be sure 
+# that it returns a good result in a decent time)
+# It is important say that here uses Vector Space Model to calculate the relecance too,
+# when the weight of term proximity is the same
+
+# function that calculates the minimun distance between two terms in a doc
+def minDist(term1, term2, invertedFile):
+    if len(invertedFile["invertedFile"].get(term1,[])) == 0:
+        return 15000
+    if len(invertedFile["invertedFile"].get(term2,[])) == 0:
+        return 15000
+    minValue = 15000
+    list1 = invertedFile["invertedFile"].get(term1)
+    list2 = invertedFile["invertedFile"].get(term2)
+    l1 = range(0,len(list1))
+    l2 = range(0,len(list2))
+    for i in l1:
+        for j in l2:
+            if(list1[i]<list2[j]):
+                if(list2[j]-(list1[i]+len(term1))<minValue):
+                    minValue = list2[j]-(list1[i]+len(term1))
+            else:
+                if(list1[i]-(list2[j]+len(term2))<minValue):
+                    minValue = list1[i]-(list2[j]+len(term2))
+    return minValue
+
+#function that calculates the minimum distance between all terms of the query
+# and stores in a two-dimensional list
+def matrixDist(query, invertedFile):
+    query = removeDuplicates(query)
+    matrix = [[0 for x in range(len(query))] for y in range(len(query))]
+    l1 = range(0,len(query))
+    for i in l1:
+        for j in l1:
+            if i!=j:
+                matrix[i][j] = minDist(query[i],query[j],invertedFile)
+    return matrix
+
+#function that do the sum of all distances
+def weightFileTermProximity(query, invertedFile):
+    return sum(map(sum, matrixDist(query, invertedFile)))/2
+
+#function that receive a query, a doc list, a inverted file list, the total
+# number of all documents that exists in database, and the total number
+# of files that were recovered and returns a pair list of weight and docs
+# in relevance order
+def rankingDocs(query, docs, invertedFiles, fileTotalNumber, FileRecoveredNumber):
+    length =  range(0,len(docs))
+    query = removeDuplicates(query)
+    vecQuery = vectorQuery(query,fileTotalNumber, fileRecoveredNumber)
+    pair = [[0,0.0,docs[0]] for x in range(len(docs))]
+    for i in length:
+        pair[i] = [weightFileTermProximity(query, invertedFiles[i]), -(cos(vecQuery, vectorFile(query, docs[i], invertedFiles[i],fileTotalNumber, fileRecoveredNumber))),docs[i]]
+    pair = sorted(pair)
+    return pair
+    
+    
+#############################################################################
+# This method is more reliable because we get this from a book of information
+# retrieval area (Information Retrieval: Implementing and Evaluating Search Engines) 
+# It uses the idea of covering. We define a cover as a window that contains all
+# elements from the query. A cover can't contain a cover in itself. 
+# The key of the algorithm is calculate all covers avaliable in a doc
+# and uses the window values(all of them) to calculate the score of the file
+# Then, we rank the docs based in these scores
+# Here, we use, again, the Vector Space Model as second priority
+
+
+# function that returns a list with all elements of the query that is in the doc
+def getList(query,invertedFile):
+    query = removeDuplicates(query)
+    result = []
+    for q in query:
+        l1 = map(lambda x: [x,q], invertedFile["invertedFile"].get(q,[]))
+        for l in l1:
+            result.append(l)
+    result = sorted(result)
+    return result
+
+# function that calculate all covers of a doc based in a query
+def allCovers(query,invertedFile):
+    i = 0
+    j = 0
+    l1 = getList(query, invertedFile)
+    result = []
+    query = removeDuplicates(query)
+    elements = []
+    s = range(j,len(l1))
+    for k in s:
+        elements.append(l1[k][1])
+        if isCovered(elements,query):
+            while isCovered(elements,query):
+                elements.remove(l1[i][1])
+                i += 1
+            i -= 1
+            elements.append(l1[i][1])
+            if(isCovered(elements,query)):
+                result.append([l1[i][0],l1[k][0]])
+            elements.remove(l1[i][1])
+            i += 1
+    return result
+
+
+# function that says if a window is a cover
+# I know that It may not to seen so efficient but It is what I could do
+def isCovered(elements,query):
+    elements = removeDuplicates(elements)
+    query = sorted(query)
+    elements = sorted(elements)
+    return query == elements
+    
+# function that calculates a score of a document based on a query   
+def score(query, invertedFile):
+    l1 = allCovers(query,invertedFile)
+    result = 0.0
+    for l in l1:
+        result += 1.0/(l[1]-l[0]+1)
+    return result
+    
+#function that receive a query, a doc list, a inverted file list, the total
+# number of all documents that exists in database, and the total number
+# of files that were recovered and returns a pair list of weight and docs
+# in relevance order
+def rankingFiles(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumber):
+    pair = [[0,0.0,docs[0]] for x in range(len(docs))]
+    length = range(0,len(docs))
+    vecQuery = vectorQuery(query,fileTotalNumber, fileRecoveredNumber)
+    for i in length:
+        pair[i] = [score(query,invertedFiles[i]), cos(vecQuery, vectorFile(query, docs[i], invertedFiles[i],fileTotalNumber, fileRecoveredNumber)) , docs[i]]
+    pair = sorted(pair,reverse=True)
+    return pair
+    
+    
+    
 # examples to test functions' correctness
 
 word1 = "cat"
 word2 = "bad"
-text = "cat is so cute. cat is bad."
-#       012345678901234567890123456
-invertedFile = {"size": 4, "invertedFile": {"bad":[23],"cat":[0,16],"cute":[10]}}
+text = "cat is so cute. cat is cat."
+#      012345678901234567890123456
+invertedFile = {"size": 4, "invertedFile": {"cat":[0,16,23],"cute":[10]}}
 fileTotalNumber = 200
 fileRecoveredNumber = 50
 
-query = ["cat","bad","cat","bad"]
+query = ["cat","cute","bad"]
 
-text2 = "cat is so cute. cat is sad."
-#        012345678901234567890123456
-invertedFile2 = {"size": 4, "invertedFile": {"cat":[0,16],"cute":[10],"sad":[23]}}
+print (sorted([[2,3],[2,2]]))
 
 
+text2 = "cat is so bute. bute is cute."
+#      012345678901234567890123456
+invertedFile2 = {"size": 4, "invertedFile": {"bute": [10,16], "cat":[0],"cute":[24]}}
+
+#invertedFile2 = {"size": 4, "invertedFile": {"cat":[0,16,23,32],"cute":[10,14,35,42],"sad":[23,29,38,63]}}
+
+
+v1 = vectorFile(query,text,invertedFile,fileTotalNumber,fileRecoveredNumber)
+v2 = vectorFile(query,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber)
+vf = vectorQuery(query,fileTotalNumber,fileRecoveredNumber)
 print (weightFileTDIDF(word1,text,invertedFile,fileTotalNumber,fileRecoveredNumber))
 print (weightFileTDIDF(word2,text,invertedFile,fileTotalNumber,fileRecoveredNumber))
 print (vectorFile(query,text,invertedFile,fileTotalNumber,fileRecoveredNumber))
@@ -68,3 +236,10 @@ print (weightFileTDIDF(word1,text2,invertedFile2,fileTotalNumber,fileRecoveredNu
 print (weightFileTDIDF(word2,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber))
 print (vectorFile(query,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber))
 print (vectorQuery(query,fileTotalNumber,fileRecoveredNumber))
+print (cos(v1,vf))
+print (cos(v2,vf))
+
+print(rankingDocs(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber,fileRecoveredNumber))
+#print(nextCover(1,1,query,invertedFile2))
+
+print (rankingFiles(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber,fileRecoveredNumber))
