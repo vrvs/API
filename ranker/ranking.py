@@ -181,7 +181,7 @@ def isCovered(elements,query):
     elements = sorted(elements)
     return query == elements
     
-# function that calculates a score of a document based on a query   
+# function that calculates a score of a document based on a query    
 def score(query, invertedFile):
     l1 = allCovers(query,invertedFile)
     result = 0.0
@@ -201,15 +201,13 @@ def rankingFiles(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumbe
         pair[i] = [score(query,invertedFiles[i]), cos(vecQuery, vectorFile(query, docs[i], invertedFiles[i],fileTotalNumber, fileRecoveredNumber)) , docs[i]]
     pair = sorted(pair,reverse=True)
     return pair
-    
-    
+
     
 # examples to test functions' correctness
-
 word1 = "cat"
 word2 = "bad"
 text = "cat is so cute. cat is cat."
-#      012345678901234567890123456
+#       012345678901234567890123456
 invertedFile = {"size": 4, "invertedFile": {"cat":[0,16,23],"cute":[10]}}
 fileTotalNumber = 200
 fileRecoveredNumber = 50
@@ -220,7 +218,7 @@ print (sorted([[2,3],[2,2]]))
 
 
 text2 = "cat is so bute. bute is cute."
-#      012345678901234567890123456
+#        012345678901234567890123456
 invertedFile2 = {"size": 4, "invertedFile": {"bute": [10,16], "cat":[0],"cute":[24]}}
 
 #invertedFile2 = {"size": 4, "invertedFile": {"cat":[0,16,23,32],"cute":[10,14,35,42],"sad":[23,29,38,63]}}
