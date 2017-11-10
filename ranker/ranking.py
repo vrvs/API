@@ -4,10 +4,17 @@ import sys
 
 # function that returns the tdidf weight of a document
 def weightFileTDIDF(word, text, invertedFile, fileTotalNumber, fileRecoveredNumber):
-    tf = len(invertedFile["invertedFile"].get(word,[]))/float(invertedFile["size"])
+    tf = len(invertedFile.get(word,[]))/float(size(invertedFile))
     idf = math.log(fileTotalNumber/fileRecoveredNumber,10);
     tfidf = tf*idf
     return tfidf
+
+# function that calculates the number of words in a document (inverted file)
+def size(invertedFile):
+    values = invertedFile.values()
+    length = map(lambda x: len(x), values)
+    length = sum(length)
+    return length
 
 # function that returns a vector of a document based on a query 
 # a query with duplicate elements will remove the duplicates to build the vector
@@ -77,13 +84,13 @@ def cos(vector1, vector2):
 
 # function that calculates the minimun distance between two terms in a doc
 def minDist(term1, term2, invertedFile):
-    if len(invertedFile["invertedFile"].get(term1,[])) == 0:
+    if len(invertedFile.get(term1,[])) == 0:
         return 15000
-    if len(invertedFile["invertedFile"].get(term2,[])) == 0:
+    if len(invertedFile.get(term2,[])) == 0:
         return 15000
     minValue = 15000
-    list1 = invertedFile["invertedFile"].get(term1)
-    list2 = invertedFile["invertedFile"].get(term2)
+    list1 = invertedFile.get(term1)
+    list2 = invertedFile.get(term2)
     l1 = range(0,len(list1))
     l2 = range(0,len(list2))
     for i in l1:
@@ -143,7 +150,7 @@ def getList(query,invertedFile):
     query = removeDuplicates(query)
     result = []
     for q in query:
-        l1 = map(lambda x: [x,q], invertedFile["invertedFile"].get(q,[]))
+        l1 = map(lambda x: [x,q], invertedFile.get(q,[]))
         for l in l1:
             result.append(l)
     result = sorted(result)
@@ -203,17 +210,16 @@ def rankingFiles(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumbe
     return pair
     
     
-'''  
+''' 
 # examples to test functions' correctness
 
 word1 = "cat"
 word2 = "bad"
 text = "cat is so cute. cat is cat."
 #       012345678901234567890123456
-invertedFile = {"size": 4, "invertedFile": {"cat":[0,16,23],"cute":[10]}}
+invertedFile = {"cat":[0,16,23],"cute":[10]}
 fileTotalNumber = 200
 fileRecoveredNumber = 50
-
 
 query = ["cat","cute","bad"]
 
@@ -222,7 +228,7 @@ print (sorted([[2,3],[2,2]]))
 
 text2 = "cat is so bute. bute is cute."
 #        012345678901234567890123456
-invertedFile2 = {"size": 4, "invertedFile": {"bute": [10,16], "cat":[0],"cute":[24]}}
+invertedFile2 =  {"bute": [10,16], "cat":[0],"cute":[24]}
 
 #invertedFile2 = {"size": 4, "invertedFile": {"cat":[0,16,23,32],"cute":[10,14,35,42],"sad":[23,29,38,63]}}
 
