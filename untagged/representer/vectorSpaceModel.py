@@ -61,17 +61,16 @@ def invertedFile (file):
     voc = []
     size = 0
     result = {}
-    vocabulary = []
-    vocabulary = file.split()
-    voc = removeDuplicates(vocabulary)
-    size = len(vocabulary)
+    file = file.split()
+    voc = removeDuplicates(file)
+    size = len(file)
     
     for q in voc:
         result[q] = []
         
     for q in voc:
         for i in range(size):
-            if q == vocabulary[i]:
+            if q == file[i]:
                 result[q].append(i)
      
     return result
