@@ -27,3 +27,7 @@ def load(algo = 'potter2'):
 
 def stemize(word):
     return _stem(word)
+
+def transform(query):
+    newQuery = map(_stem, query)
+    return newQuery
