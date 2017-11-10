@@ -1,6 +1,11 @@
+<<<<<<< HEAD:ranker/ranking.py
 # encoding: utf-8
 import math
 import sys
+=======
+from ..representer import *
+import math
+>>>>>>> e3856072590d0190e15024951ab14b9f7c52d146:untagged/ranker/ranking.py
 
 # function that returns the tdidf weight of a document
 def weightFileTDIDF(word, text, invertedFile, fileTotalNumber, fileRecoveredNumber):
