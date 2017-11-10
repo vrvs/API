@@ -116,7 +116,7 @@ def weightFileTermProximity(query, invertedFile):
 # number of all documents that exists in database, and the total number
 # of files that were recovered and returns a pair list of weight and docs
 # in relevance order
-def rankingDocs(query, docs, invertedFiles, fileTotalNumber, FileRecoveredNumber):
+def rankingDocs(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumber):
     length =  range(0,len(docs))
     query = removeDuplicates(query)
     vecQuery = vectorQuery(query,fileTotalNumber, fileRecoveredNumber)
@@ -203,7 +203,7 @@ def rankingFiles(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumbe
     return pair
     
     
-    
+'''  
 # examples to test functions' correctness
 
 word1 = "cat"
@@ -213,6 +213,7 @@ text = "cat is so cute. cat is cat."
 invertedFile = {"size": 4, "invertedFile": {"cat":[0,16,23],"cute":[10]}}
 fileTotalNumber = 200
 fileRecoveredNumber = 50
+
 
 query = ["cat","cute","bad"]
 
@@ -243,3 +244,4 @@ print(rankingDocs(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumbe
 #print(nextCover(1,1,query,invertedFile2))
 
 print (rankingFiles(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber,fileRecoveredNumber))
+'''
