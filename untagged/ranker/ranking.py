@@ -1,5 +1,5 @@
+from ..representer import *
 import math
-from representer import vectorSpaceModel 
 
 # function that returns the tdidf weight of a document
 def weightFileTDIDF(word, text, invertedFile, fileTotalNumber, fileRecoveredNumber):
