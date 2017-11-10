@@ -37,7 +37,7 @@ def cossine (document, query):
         result += normalizedDoc[i]*normalizedQuery[i]
     return result
     
-#function that return the size of the vector 
+# function that return the size of the vector 
 def norma (vector): 
     result = []
     norma = 0.0
@@ -46,7 +46,7 @@ def norma (vector):
     norma = math.sqrt(norma)
     return norma
 
-#function that return the correspondent vector that has the norma equals to 1
+# function that return the correspondent vector that has the norma equals to 1
 def normalize(vector):
     result = []
     normal = 0.0
@@ -54,18 +54,44 @@ def normalize(vector):
     result = [x/normal for x in vector]
     return result
 
-#function that gives the similareties between the query and the documents that use as base the cossine 
+# function that gives the similareties between the query and the documents using the cossine as base 
 def similarities (query, documents):
     result = []
     result = [cossine(query, x) for x in documents]
     return result
     
+def invertedFile (file):
+    result = {}
+    vocabulary = []
+    posicion = []
+    size = 0
+    vocabulary = file.split()
+    voc = []
+    voc = removeDuplicates(vocabulary)
+    size = len(vocabulary)
+    for q in voc:
+        result[q] = []
+    for q in voc:
+        for i in range(size):
+            if q == vocabulary[i]:
+                result[q].append(i)
+     
+    return result
+    
+def removeDuplicates(query):
+    result = []
+    for q in query:
+       if q not in result:
+           result.append(q)
+    return result
+    
+#lista1 = [1,2]
+#lista4 = [2,-1]
+#lista2 = [2,3]
+#lista3 = [3,4]
+#lista5 = [lista2, lista3, lista4]
+#print(cossine(lista1, lista4))
+#print(similarities(lista1, lista5))
+print(invertedFile("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."))
 
-lista1 = [1,2]
-lista4 = [2,-1]
-lista2 = [2,3]
-lista3 = [3,4]
-lista5 = [lista2, lista3, lista4]
-print(cossine(lista1, lista4))
-print(similarities(lista1, lista5))
 #ANALISAR DISSMILIDARIDADES ENRE OBJETOS
