@@ -116,7 +116,7 @@ def weightFileTermProximity(query, invertedFile):
 # number of all documents that exists in database, and the total number
 # of files that were recovered and returns a pair list of weight and docs
 # in relevance order
-def rankingDocs(query, docs, invertedFiles, fileTotalNumber, FileRecoveredNumber):
+def rankingDocs(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumber):
     length =  range(0,len(docs))
     query = removeDuplicates(query)
     vecQuery = vectorQuery(query,fileTotalNumber, fileRecoveredNumber)
@@ -201,8 +201,9 @@ def rankingFiles(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumbe
         pair[i] = [score(query,invertedFiles[i]), cos(vecQuery, vectorFile(query, docs[i], invertedFiles[i],fileTotalNumber, fileRecoveredNumber)) , docs[i]]
     pair = sorted(pair,reverse=True)
     return pair
-
     
+    
+'''  
 # examples to test functions' correctness
 word1 = "cat"
 word2 = "bad"
@@ -211,19 +212,12 @@ text = "cat is so cute. cat is cat."
 invertedFile = {"size": 4, "invertedFile": {"cat":[0,16,23],"cute":[10]}}
 fileTotalNumber = 200
 fileRecoveredNumber = 50
-
 query = ["cat","cute","bad"]
-
 print (sorted([[2,3],[2,2]]))
-
-
 text2 = "cat is so bute. bute is cute."
 #        012345678901234567890123456
 invertedFile2 = {"size": 4, "invertedFile": {"bute": [10,16], "cat":[0],"cute":[24]}}
-
 #invertedFile2 = {"size": 4, "invertedFile": {"cat":[0,16,23,32],"cute":[10,14,35,42],"sad":[23,29,38,63]}}
-
-
 v1 = vectorFile(query,text,invertedFile,fileTotalNumber,fileRecoveredNumber)
 v2 = vectorFile(query,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber)
 vf = vectorQuery(query,fileTotalNumber,fileRecoveredNumber)
@@ -236,8 +230,7 @@ print (vectorFile(query,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber)
 print (vectorQuery(query,fileTotalNumber,fileRecoveredNumber))
 print (cos(v1,vf))
 print (cos(v2,vf))
-
 print(rankingDocs(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber,fileRecoveredNumber))
 #print(nextCover(1,1,query,invertedFile2))
-
 print (rankingFiles(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber,fileRecoveredNumber))
+'''
