@@ -64,9 +64,9 @@ def invertedFile (file):
     result = {}
     vocabulary = []
     posicion = []
+    voc = []
     size = 0
     vocabulary = file.split()
-    voc = []
     voc = removeDuplicates(vocabulary)
     size = len(vocabulary)
     for q in voc:
