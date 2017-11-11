@@ -123,7 +123,8 @@ def weightFileTermProximity(query, invertedFile):
 # number of all documents that exists in database, and the total number
 # of files that were recovered and returns a pair list of weight and docs
 # in relevance order
-def rankingDocs(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumber):
+def rankingDocs(query, docs, invertedFiles, fileTotalNumber):
+    fileRecoveredNumber = len(docs)
     length =  range(0,len(docs))
     query = removeDuplicates(query)
     vecQuery = vectorQuery(query,fileTotalNumber, fileRecoveredNumber)
@@ -132,8 +133,34 @@ def rankingDocs(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumber
         pair[i] = [weightFileTermProximity(query, invertedFiles[i]), -(cos(vecQuery, vectorFile(query, docs[i], invertedFiles[i],fileTotalNumber, fileRecoveredNumber))),docs[i]]
     pair = sorted(pair)
     return pair
-    
-    
+
+def rankingContainers1(query, dictionary):
+    entity = dictionary.keys()
+    size = []
+    comments = []
+    invertedFiles = []
+    for e in entity:
+        size.append(dictionary[e]["fileTotalNumber"])
+        aux = dictionary[e]["comments"].keys()
+        comments.append(aux)
+        aux2 = []
+        for a in aux:
+            aux2.append(dictionary[e]["comments"][a])
+        invertedFiles.append(aux2)
+    pair = [[0,0.0,entity[0]] for x in range(len(entity))]
+    length =  range(0,len(entity))
+    for i in length:
+        aux = rankingDocs(query,comments[i],invertedFiles[i],dictionary[entity[i]]["fileTotalNumber"])
+        for a in min(range(0,5),range(0,len(aux))):
+            pair[i][0] += aux[a][0]
+            pair[i][1] += aux[a][1]
+        pair[i][0] /= min(5,len(aux))
+        pair[i][1] /= min(5,len(aux))
+        pair[i][2] = entity[i]
+    pair = sorted(pair)
+    return pair
+
+ 
 #############################################################################
 # This method is more reliable because we get this from a book of information
 # retrieval area (Information Retrieval: Implementing and Evaluating Search Engines) 
@@ -200,7 +227,8 @@ def score(query, invertedFile):
 # number of all documents that exists in database, and the total number
 # of files that were recovered and returns a pair list of weight and docs
 # in relevance order
-def rankingFiles(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumber):
+def rankingFiles(query, docs, invertedFiles, fileTotalNumber):
+    fileRecoveredNumber = len(docs)
     pair = [[0,0.0,docs[0]] for x in range(len(docs))]
     length = range(0,len(docs))
     vecQuery = vectorQuery(query,fileTotalNumber, fileRecoveredNumber)
@@ -208,9 +236,41 @@ def rankingFiles(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumbe
         pair[i] = [score(query,invertedFiles[i]), cos(vecQuery, vectorFile(query, docs[i], invertedFiles[i],fileTotalNumber, fileRecoveredNumber)) , docs[i]]
     pair = sorted(pair,reverse=True)
     return pair
-    
-    
-''' 
+
+def rankingContainers(query, dictionary):
+    entity = dictionary.keys()
+    size = []
+    comments = []
+    invertedFiles = []
+    for e in entity:
+        size.append(dictionary[e]["fileTotalNumber"])
+        aux = dictionary[e]["comments"].keys()
+        comments.append(aux)
+        aux2 = []
+        for a in aux:
+            aux2.append(dictionary[e]["comments"][a])
+        invertedFiles.append(aux2)
+    pair = [[0,0.0,0.0,entity[0]] for x in range(len(entity))]
+    length =  range(0,len(entity))
+    for i in length:
+        aux = rankingFiles(query,comments[i],invertedFiles[i],dictionary[entity[i]]["fileTotalNumber"])
+        aux2 = len(filter(lambda x: x[0] > 0.0, aux))
+        if aux2 == 0:
+            aux2 = sys.maxsize
+        pair[i][0] = -aux2
+        for a in min(range(0,5),range(0,len(aux))):
+            pair[i][1] += aux[a][0]
+            pair[i][2] += aux[a][1]
+        aux1 = pair[i][1] / min(5,len(aux))
+        aux2 = pair[i][2] / min(5,len(aux))
+        pair[i][1] += aux1*(5-min(5,len(aux)))
+        pair[i][2] += aux2*(5-min(5,len(aux)))
+        pair[i][3] = entity[i]
+    pair = sorted(pair)
+    return pair
+
+ 
+
 # examples to test functions' correctness
 
 word1 = "cat"
@@ -221,9 +281,9 @@ invertedFile = {"cat":[0,16,23],"cute":[10]}
 fileTotalNumber = 200
 fileRecoveredNumber = 50
 
-query = ["cat","cute","bad"]
+query = ["cat","cute"]
 
-print (sorted([[2,3],[2,2]]))
+#print (sorted([[2,3],[2,2]]))
 
 
 text2 = "cat is so bute. bute is cute."
@@ -236,6 +296,7 @@ invertedFile2 =  {"bute": [10,16], "cat":[0],"cute":[24]}
 v1 = vectorFile(query,text,invertedFile,fileTotalNumber,fileRecoveredNumber)
 v2 = vectorFile(query,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber)
 vf = vectorQuery(query,fileTotalNumber,fileRecoveredNumber)
+'''
 print (weightFileTDIDF(word1,text,invertedFile,fileTotalNumber,fileRecoveredNumber))
 print (weightFileTDIDF(word2,text,invertedFile,fileTotalNumber,fileRecoveredNumber))
 print (vectorFile(query,text,invertedFile,fileTotalNumber,fileRecoveredNumber))
@@ -248,6 +309,9 @@ print (cos(v2,vf))
 
 print(rankingDocs(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber,fileRecoveredNumber))
 #print(nextCover(1,1,query,invertedFile2))
-
-print (rankingFiles(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber,fileRecoveredNumber))
 '''
+print (rankingFiles(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber))
+
+dic = {"h1":{"fileTotalNumber": 5, "comments": {"c1": invertedFile, "c2": invertedFile2} }, "h2":{"fileTotalNumber": 6, "comments": {"c3": invertedFile, "c4": invertedFile2, "c5": invertedFile2} }}
+
+print (rankingContainers(query,dic))
