@@ -2,14 +2,14 @@ import json
 
 _sw = set()
 
-def load(path = "lexer/stopwords/stopwords.json"):
+def load(path = "untagged/lexer/stopwords/stopwords.json"):
     global _sw
     with open(path, 'r') as fileIn:
         words = json.load(fileIn)
         _sw = set(words)
         fileIn.close()
 
-def save(path = "lexer/stopwords/stopwords.json"):
+def save(path = "untagged/lexer/stopwords/stopwords.json"):
     words = list(_sw)
     with open(path, 'w') as fileOut:
         json.dump(words, fileOut)

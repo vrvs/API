@@ -32,17 +32,18 @@ class Hash:
         return ls
     
     def load(self):
-        path = 'indexer/datasets/hash/' + self._name + '.json'
+        path = 'untagged/indexer/datasets/hash/' + self._name + '.json'
         try:
             with open(path, 'r') as fileIn:
                 self._hash = json.load(fileIn)
                 fileIn.close()
         except IOError:
-            with open(path, 'w') as fileIn:
-                fileIn.close()
+            with open(path, 'w') as fileOut:
+                json.dump(self._hash, fileOut)
+                fileOut.close()
     
     def save(self):
-        path = 'indexer/datasets/hash/' + self._name + '.json'
+        path = 'untagged/indexer/datasets/hash/' + self._name + '.json'
         with open(path, 'w') as fileOut:
             json.dump(self._hash, fileOut)
             fileOut.close()
@@ -92,8 +93,8 @@ class Hash:
         return test
 
     def length(self):
-        l = len(self._hash)
-        return l
+        lng = len(self._hash)
+        return lng
 
     def clear(self):
         self._hash.clear()
@@ -117,3 +118,7 @@ class Hash:
     def values(self):
         v = self._hash.values()
         return v
+    
+    def name(self):
+        name = self._name
+        return name

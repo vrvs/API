@@ -1,1 +1,1 @@
-__all__ = ['indexer', 'representer', 'lexer', 'ranker']
+__all__ = ['indexer', 'representer', 'lexer', 'ranker', 'retriever']

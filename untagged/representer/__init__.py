@@ -1,1 +1,1 @@
-__all__ = ['vectorSpaceModel']
+__all__ = ['inverter']

@@ -1,1 +1,1 @@
-__all__ = ['hash']
+__all__ = ['hashing']
