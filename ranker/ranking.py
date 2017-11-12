@@ -117,7 +117,13 @@ def matrixDist(query, invertedFile):
 
 #function that do the sum of all distances
 def weightFileTermProximity(query, invertedFile):
-    return sum(map(sum, matrixDist(query, invertedFile)))/2
+    if(len(query)==1):
+        l1 = invertedFile.get(query[0],[])
+        if(len(l1)==0):
+            return sys.float_info.max
+        else:
+            return 1/len(l1)
+    return (float)(sum(map(sum, matrixDist(query, invertedFile)))/2)
 
 #function that receive a query, a doc list, a inverted file list, the total
 # number of all documents that exists in database, and the total number
@@ -128,7 +134,7 @@ def rankingDocs(query, docs, invertedFiles, fileTotalNumber):
     length =  range(0,len(docs))
     query = removeDuplicates(query)
     vecQuery = vectorQuery(query,fileTotalNumber, fileRecoveredNumber)
-    pair = [[0,0.0,docs[0]] for x in range(len(docs))]
+    pair = [[0.0,0.0,docs[0]] for x in range(len(docs))]
     for i in length:
         pair[i] = [weightFileTermProximity(query, invertedFiles[i]), -(cos(vecQuery, vectorFile(query, docs[i], invertedFiles[i],fileTotalNumber, fileRecoveredNumber))),docs[i]]
     pair = sorted(pair)
@@ -147,7 +153,7 @@ def rankingContainers1(query, dictionary):
         for a in aux:
             aux2.append(dictionary[e]["comments"][a])
         invertedFiles.append(aux2)
-    pair = [[0,0.0,entity[0]] for x in range(len(entity))]
+    pair = [[0.0,0.0,entity[0]] for x in range(len(entity))]
     length =  range(0,len(entity))
     for i in length:
         aux = rankingDocs(query,comments[i],invertedFiles[i],dictionary[entity[i]]["fileTotalNumber"])
@@ -281,7 +287,7 @@ invertedFile = {"cat":[0,16,23],"cute":[10]}
 fileTotalNumber = 200
 fileRecoveredNumber = 50
 
-query = ["cat","cute"]
+query = ["cat"]
 
 #print (sorted([[2,3],[2,2]]))
 
@@ -312,6 +318,6 @@ print(rankingDocs(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumbe
 '''
 print (rankingFiles(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber))
 
-dic = {"h1":{"fileTotalNumber": 5, "comments": {"c1": invertedFile, "c2": invertedFile2} }, "h2":{"fileTotalNumber": 6, "comments": {"c3": invertedFile, "c4": invertedFile2, "c5": invertedFile2} }}
+dic = {"h1":{"fileTotalNumber": 5, "comments": {"c1": invertedFile, "c2": invertedFile2, "c6": invertedFile} }, "h2":{"fileTotalNumber": 6, "comments": {"c3": invertedFile, "c4": invertedFile2, "c5": invertedFile2} }}
 
-print (rankingContainers(query,dic))
+print (rankingContainers1(query,dic))
