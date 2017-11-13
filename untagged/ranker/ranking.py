@@ -4,10 +4,17 @@ import sys
 
 # function that returns the tdidf weight of a document
 def weightFileTDIDF(word, text, invertedFile, fileTotalNumber, fileRecoveredNumber):
-    tf = len(invertedFile["invertedFile"].get(word,[]))/float(invertedFile["size"])
+    tf = len(invertedFile.get(word,[]))/float(size(invertedFile))
     idf = math.log(fileTotalNumber/fileRecoveredNumber,10);
     tfidf = tf*idf
     return tfidf
+
+# function that calculates the number of words in a document (inverted file)
+def size(invertedFile):
+    values = invertedFile.values()
+    length = map(lambda x: len(x), values)
+    length = sum(length)
+    return length
 
 # function that returns a vector of a document based on a query 
 # a query with duplicate elements will remove the duplicates to build the vector
@@ -77,13 +84,13 @@ def cos(vector1, vector2):
 
 # function that calculates the minimun distance between two terms in a doc
 def minDist(term1, term2, invertedFile):
-    if len(invertedFile["invertedFile"].get(term1,[])) == 0:
+    if len(invertedFile.get(term1,[])) == 0:
         return 15000
-    if len(invertedFile["invertedFile"].get(term2,[])) == 0:
+    if len(invertedFile.get(term2,[])) == 0:
         return 15000
     minValue = 15000
-    list1 = invertedFile["invertedFile"].get(term1)
-    list2 = invertedFile["invertedFile"].get(term2)
+    list1 = invertedFile.get(term1)
+    list2 = invertedFile.get(term2)
     l1 = range(0,len(list1))
     l2 = range(0,len(list2))
     for i in l1:
@@ -110,23 +117,56 @@ def matrixDist(query, invertedFile):
 
 #function that do the sum of all distances
 def weightFileTermProximity(query, invertedFile):
-    return sum(map(sum, matrixDist(query, invertedFile)))/2
+    if(len(query)==1):
+        l1 = invertedFile.get(query[0],[])
+        if(len(l1)==0):
+            return sys.float_info.max
+        else:
+            return 1/len(l1)
+    return (float)(sum(map(sum, matrixDist(query, invertedFile)))/2)
 
 #function that receive a query, a doc list, a inverted file list, the total
 # number of all documents that exists in database, and the total number
 # of files that were recovered and returns a pair list of weight and docs
 # in relevance order
-def rankingDocs(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumber):
+def rankingDocs(query, docs, invertedFiles, fileTotalNumber):
+    fileRecoveredNumber = len(docs)
     length =  range(0,len(docs))
     query = removeDuplicates(query)
     vecQuery = vectorQuery(query,fileTotalNumber, fileRecoveredNumber)
-    pair = [[0,0.0,docs[0]] for x in range(len(docs))]
+    pair = [[0.0,0.0,docs[0]] for x in range(len(docs))]
     for i in length:
         pair[i] = [weightFileTermProximity(query, invertedFiles[i]), -(cos(vecQuery, vectorFile(query, docs[i], invertedFiles[i],fileTotalNumber, fileRecoveredNumber))),docs[i]]
     pair = sorted(pair)
     return pair
-    
-    
+
+def rankingContainers1(query, dictionary):
+    entity = dictionary.keys()
+    size = []
+    comments = []
+    invertedFiles = []
+    for e in entity:
+        size.append(dictionary[e]["fileTotalNumber"])
+        aux = dictionary[e]["comments"].keys()
+        comments.append(aux)
+        aux2 = []
+        for a in aux:
+            aux2.append(dictionary[e]["comments"][a])
+        invertedFiles.append(aux2)
+    pair = [[0.0,0.0,entity[0]] for x in range(len(entity))]
+    length =  range(0,len(entity))
+    for i in length:
+        aux = rankingDocs(query,comments[i],invertedFiles[i],dictionary[entity[i]]["fileTotalNumber"])
+        for a in min(range(0,5),range(0,len(aux))):
+            pair[i][0] += aux[a][0]
+            pair[i][1] += aux[a][1]
+        pair[i][0] /= min(5,len(aux))
+        pair[i][1] /= min(5,len(aux))
+        pair[i][2] = entity[i]
+    pair = sorted(pair)
+    return pair
+
+ 
 #############################################################################
 # This method is more reliable because we get this from a book of information
 # retrieval area (Information Retrieval: Implementing and Evaluating Search Engines) 
@@ -143,7 +183,7 @@ def getList(query,invertedFile):
     query = removeDuplicates(query)
     result = []
     for q in query:
-        l1 = map(lambda x: [x,q], invertedFile["invertedFile"].get(q,[]))
+        l1 = map(lambda x: [x,q], invertedFile.get(q,[]))
         for l in l1:
             result.append(l)
     result = sorted(result)
@@ -193,7 +233,8 @@ def score(query, invertedFile):
 # number of all documents that exists in database, and the total number
 # of files that were recovered and returns a pair list of weight and docs
 # in relevance order
-def rankingFiles(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumber):
+def rankingFiles(query, docs, invertedFiles, fileTotalNumber):
+    fileRecoveredNumber = len(docs)
     pair = [[0,0.0,docs[0]] for x in range(len(docs))]
     length = range(0,len(docs))
     vecQuery = vectorQuery(query,fileTotalNumber, fileRecoveredNumber)
@@ -201,36 +242,35 @@ def rankingFiles(query, docs, invertedFiles, fileTotalNumber, fileRecoveredNumbe
         pair[i] = [score(query,invertedFiles[i]), cos(vecQuery, vectorFile(query, docs[i], invertedFiles[i],fileTotalNumber, fileRecoveredNumber)) , docs[i]]
     pair = sorted(pair,reverse=True)
     return pair
-    
-    
-'''  
-# examples to test functions' correctness
-word1 = "cat"
-word2 = "bad"
-text = "cat is so cute. cat is cat."
-#       012345678901234567890123456
-invertedFile = {"size": 4, "invertedFile": {"cat":[0,16,23],"cute":[10]}}
-fileTotalNumber = 200
-fileRecoveredNumber = 50
-query = ["cat","cute","bad"]
-print (sorted([[2,3],[2,2]]))
-text2 = "cat is so bute. bute is cute."
-#        012345678901234567890123456
-invertedFile2 = {"size": 4, "invertedFile": {"bute": [10,16], "cat":[0],"cute":[24]}}
-#invertedFile2 = {"size": 4, "invertedFile": {"cat":[0,16,23,32],"cute":[10,14,35,42],"sad":[23,29,38,63]}}
-v1 = vectorFile(query,text,invertedFile,fileTotalNumber,fileRecoveredNumber)
-v2 = vectorFile(query,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber)
-vf = vectorQuery(query,fileTotalNumber,fileRecoveredNumber)
-print (weightFileTDIDF(word1,text,invertedFile,fileTotalNumber,fileRecoveredNumber))
-print (weightFileTDIDF(word2,text,invertedFile,fileTotalNumber,fileRecoveredNumber))
-print (vectorFile(query,text,invertedFile,fileTotalNumber,fileRecoveredNumber))
-print (weightFileTDIDF(word1,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber))
-print (weightFileTDIDF(word2,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber))
-print (vectorFile(query,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber))
-print (vectorQuery(query,fileTotalNumber,fileRecoveredNumber))
-print (cos(v1,vf))
-print (cos(v2,vf))
-print(rankingDocs(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber,fileRecoveredNumber))
-#print(nextCover(1,1,query,invertedFile2))
-print (rankingFiles(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber,fileRecoveredNumber))
-'''
+
+def rankingContainers(query, dictionary):
+    entity = dictionary.keys()
+    size = []
+    comments = []
+    invertedFiles = []
+    for e in entity:
+        size.append(dictionary[e]["fileTotalNumber"])
+        aux = dictionary[e]["comments"].keys()
+        comments.append(aux)
+        aux2 = []
+        for a in aux:
+            aux2.append(dictionary[e]["comments"][a])
+        invertedFiles.append(aux2)
+    pair = [[0,0.0,0.0,entity[0]] for x in range(len(entity))]
+    length =  range(0,len(entity))
+    for i in length:
+        aux = rankingFiles(query,comments[i],invertedFiles[i],dictionary[entity[i]]["fileTotalNumber"])
+        aux2 = len(filter(lambda x: x[0] > 0.0, aux))
+        if aux2 == 0:
+            aux2 = sys.maxsize
+        pair[i][0] = -aux2
+        for a in min(range(0,5),range(0,len(aux))):
+            pair[i][1] += aux[a][0]
+            pair[i][2] += aux[a][1]
+        aux1 = pair[i][1] / min(5,len(aux))
+        aux2 = pair[i][2] / min(5,len(aux))
+        pair[i][1] += aux1*(5-min(5,len(aux)))
+        pair[i][2] += aux2*(5-min(5,len(aux)))
+        pair[i][3] = entity[i]
+    pair = sorted(pair)
+    return pair

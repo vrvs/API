@@ -39,6 +39,14 @@ class InvertedFile:
         ls = self._inverteds.get(key, [])
         return ls
     
+    def select(self, keys):
+        ls = map(self.search, keys)
+        return ls
+        
+    def keys(self):
+        ks = self._inverteds.keys()
+        return ks
+    
     def length(self):
         lng = len(self._inverteds)
         return lng

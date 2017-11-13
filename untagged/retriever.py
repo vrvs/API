@@ -1,8 +1,42 @@
-import os
 from ranker import *
 from representer import *
 from indexer import *
 from lexer import *
+import threading
+import os
+
+class Th(threading.Thread):
+    
+    def __init__(self, query, keys):
+        threading.Thread.__init__(self)
+        self._query = query
+        self._keys = keys
+        self._rank = []
+        
+    def run(self):
+        files = {}
+        name = _container.name() + "Contents/"
+        for key in self._keys:
+            content = hashing.Hash(name + str(key))
+            inverted = inverter.InvertedFile(name + str(key))
+            content.load()
+            inverted.load()
+            
+            element = files.setdefault(key, {})
+            element['fileTotalNumber'] = inverted.length()
+            comments = element.setdefault("comments", {})
+            refs = content.select(self._query)
+            for ref in refs:
+                comments[ref] = inverted.search(ref)
+        for key in files.keys():
+            if files[key]['comments'] == {}:
+                del files[key]
+        if not files == {}:
+            self._rank = ranking.rankingContainers1(self._query, files)
+    
+    def ranking(self):
+        return self._rank
+        
 
 _container = None
 
@@ -22,8 +56,12 @@ def init(name = None, stemAlgo = None, stopDict = None, orthoDict = None):
         orthography.load()
     if name is not None:
         _container = hashing.Hash(name)
-        _container.load()
-        
+    else:
+        _container = hashing.Hash()
+
+def load():
+    _container.load()
+    
 def _transform(query):
     query = normalization.normalize(query)
     query = normalization.tokenize(query)
@@ -44,7 +82,7 @@ def indexContent(parentKey, key, comment):
     newpath = 'untagged/indexer/datasets/hash/' + name
     if not os.path.exists(newpath):
         os.makedirs(newpath)
-    content = hashing.Hash(name + str(parentKey))
+    content = hashing.Hash(_container.name() + "Contents/" + str(parentKey))
     content.load()
     for token in comment:
         content.insert(token, key)
@@ -58,24 +96,54 @@ def indexContent(parentKey, key, comment):
     inverted.insert(key, comment)
     inverted.save()
     
-'''
 def retrieveContainer(query, filters = []):
     query = _transform(query)
-    elements = _container.select(query)
-    filters = set(filters)
-    elements = filter(lambda x : x in filters, elements)
-    files = {}
-    for element in elements:
-        name = _container.name() + "Contents/"
-        content = hash.Hash(name + str(parentKey))
-        content.load()
-        files[element] = 
-    '''
-tComments = {"UR123797508": "I was looking for a place to sleep nearby the airport. I didn't care too much about amenities or decor. But hey, the place is full of drug addicts. Used condoms in the stairway. I ran away from this place as fast as I could.",\
-             "UR2778933": "This nasty Motel 6 is in a high crime area and is run down. The check in staff was rude and unhelpful. Drug dealers and hookers everywhere on the streets. Bedding was dirty with stains and burn holes, was woke up several times in the night by people partying in the apartment complex next door, then woke up at 5am by the garbage truck. Gave up trying to sleep and Left.",\
-             "UR24501030": "We expected Motel 6 to be basic but we were not prepared for the awfulness of this one. The room appeared very dirty and the bed linen - if it had been changed - was full of holes and stained. I feel sorry for the Motel 6s which try - we have stayed in some- but the brand is totally trashed by experiences such as this one. We will be avoiding all Motel 6s in future."}
-
-tKey = "73869"
-
-init("hotels")
-indexContainer(tKey, tComments)
+    if filters == []:
+        filters = _container.select(query)
+    
+    count = 0
+    filtersTh = [ [] for _ in range(16)]
+    for key in filters:
+        filtersTh[count].append(key)
+        count += 1
+        if(count == 16):
+            count = 0
+    
+    threads = []
+    for i in range(16):
+        threads.append(Th(query, filtersTh[i]))
+        threads[-1].start()
+    
+    rank = []
+    for th in threads:
+        th.join()
+        rank.extend(th.ranking())
+    rank.sort()
+    rank = map(lambda x : x[2], rank)
+    rankSet = set(rank)
+    concat = filter(lambda x : x not in rankSet, filters)
+    rank.extend(concat)
+    return rank
+    
+def retrieveContent(query, key, filters = []):
+    name = _container.name() + "Contents/"
+    content = hashing.Hash(name + str(key))
+    inverted = inverter.InvertedFile(name + str(key))
+    content.load()
+    inverted.load()
+    
+    query = _transform(query)
+    docs = content.select(query)
+    invertedFiles = inverted.select(docs)
+    fileTotalNumber = inverted.length()
+    rank = []
+    if not invertedFiles == []:
+        rank = ranking.rankingDocs(query, docs, invertedFiles, fileTotalNumber)
+    rank = map(lambda x : x[2], rank)
+    rankSet = set(rank)
+    if not filters == []:
+        concat = filter(lambda x : x not in rankSet, filters)
+    else:
+        concat = filter(lambda x : x not in rankSet, inverted.keys())
+    rank.extend(concat)
+    return rank
