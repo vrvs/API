@@ -1,26 +1,46 @@
-# encoding: utf-8
 import math
 import sys
 
-# function that returns the tdidf weight of a document
 def weightFileTDIDF(word, text, invertedFile, fileTotalNumber, fileRecoveredNumber):
+    """
+    function that returns the tdidf weight of a document
+    \param word String - keyword to produce a weight relationed to it
+    \param text String - tokenized search string (query)
+    \param invertedFile dict - inverted file related to the comment
+    \param fileTotalNumber int - number of comments
+    \param fileRecoveredNumber int - number of retrieved comments
+    \return double - weight related to the word
+    """
     tf = len(invertedFile.get(word,[]))/float(size(invertedFile))
     idf = math.log(fileTotalNumber/fileRecoveredNumber,10);
     tfidf = tf*idf
     return tfidf
 
-# function that calculates the number of words in a document (inverted file)
 def size(invertedFile):
+    """
+    function that calculates the number of words in a document (inverted file)
+    \param invertedFile dict - inverted file related to the comment
+    \return int - size of the inverted file
+    """
     values = invertedFile.values()
     length = map(lambda x: len(x), values)
     length = sum(length)
     return length
 
-# function that returns a vector of a document based on a query 
-# a query with duplicate elements will remove the duplicates to build the vector
-# example query = ["cat","bad","cat","bad"] will return a vector with two elements like [0.30102999566398114, 0.15051499783199057]
-# because the second "cat" and the second "bad" will be eliminated
+
 def vectorFile(query, text, invertedFile, fileTotalNumber, fileRecoveredNumber):
+    """
+    function that returns a vector of a document based on a query.
+    a query with duplicate elements will remove the duplicates to build the vector
+    example query = ["cat","bad","cat","bad"] will return a vector with two elements like [0.30102999566398114, 0.15051499783199057]
+    because the second "cat" and the second "bad" will be eliminated
+    \param query list - list of words that represents the search string 
+    \param text String - tokenized search string (query)
+    \param invertedFile dict - inverted file related to the comment
+    \param fileTotalNumber int - number of comments
+    \param fileRecoveredNumber int - number of retrieved comments
+    \return list - list that represents a vector
+    """
     result = []
     query = removeDuplicates(query)
     for q in query:
