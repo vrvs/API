@@ -1,5 +1,6 @@
 import math
 import sys
+import itertools
 
 def weightFileTDIDF(word, text, invertedFile, fileTotalNumber, fileRecoveredNumber):
     """
@@ -149,18 +150,23 @@ def weightFileTermProximity(query, invertedFile):
 # number of all documents that exists in database, and the total number
 # of files that were recovered and returns a pair list of weight and docs
 # in relevance order
-def rankingDocs(query, docs, invertedFiles, fileTotalNumber):
+def rankingDocsaux(query, docs, invertedFiles, fileTotalNumber, pair):
     fileRecoveredNumber = len(docs)
     length =  range(0,len(docs))
     query = removeDuplicates(query)
     vecQuery = vectorQuery(query,fileTotalNumber, fileRecoveredNumber)
-    pair = [[0.0,0.0,docs[0]] for x in range(len(docs))]
     for i in length:
-        pair[i] = [weightFileTermProximity(query, invertedFiles[i]), -(cos(vecQuery, vectorFile(query, docs[i], invertedFiles[i],fileTotalNumber, fileRecoveredNumber))),docs[i]]
+        termProx = weightFileTermProximity(query, invertedFiles[i])
+        vect = -(cos(vecQuery, vectorFile(query, docs[i], invertedFiles[i],fileTotalNumber, fileRecoveredNumber)))
+        aux = pair[i][3]
+        if pair[i][0]>termProx:
+            pair[i] = [termProx, vect, docs[i], blocks(query, invertedFiles[i])]
+        elif (pair[i][0]==termProx) and (pair[i][1]>vect):
+            pair[i] = [termProx, vect, docs[i], blocks(query, invertedFiles[i])]
     pair = sorted(pair)
     return pair
 
-def rankingContainers1(query, dictionary):
+def rankingContainers1aux(query, dictionary,pair):
     entity = dictionary.keys()
     size = []
     comments = []
@@ -173,20 +179,85 @@ def rankingContainers1(query, dictionary):
         for a in aux:
             aux2.append(dictionary[e]["comments"][a])
         invertedFiles.append(aux2)
-    pair = [[0.0,0.0,entity[0]] for x in range(len(entity))]
     length =  range(0,len(entity))
     for i in length:
-        aux = rankingDocs(query,comments[i],invertedFiles[i],dictionary[entity[i]]["fileTotalNumber"])
+        pair2 = [[999999999.0,0.0,docs[0],[]] for x in range(len(comments[i]))]
+        aux = rankingDocsaux(query,comments[i],invertedFiles[i],dictionary[entity[i]]["fileTotalNumber"],pair2)
+        aux2 = [0.0,0.0,entity[0],"",[]]
         for a in min(range(0,5),range(0,len(aux))):
-            pair[i][0] += aux[a][0]
-            pair[i][1] += aux[a][1]
-        pair[i][0] /= min(5,len(aux))
-        pair[i][1] /= min(5,len(aux))
-        pair[i][2] = entity[i]
+            aux2[0] += aux[a][0]
+            aux2[1] += aux[a][1]
+        aux2[0] /= min(5,len(aux))
+        aux2[1] /= min(5,len(aux))
+        aux2[2] = entity[i]
+        aux2[3] = aux[0][2]
+        aux2[4] = aux[0][3]
+        if(pair[i][0]>aux2[0]):
+            pair[i] = aux[0]
+        elif (pair[i][0]==aux2[0]) and (pair[i][1]>aux2[1]):
+            pair[i] = aux[0]
     pair = sorted(pair)
     return pair
 
- 
+
+
+def rankingDocs(querys, docs, invertedFiles, fileTotalNumber):
+    querys = [p for p in itertools.product(*querys)]
+    pair = [[999999999.0,0.0,docs[0],[]] for x in range(len(docs))]
+    for q in querys:
+        pair = rankingDocsaux(q, docs, invertedFiles, fileTotalNumber, pair)
+    return pair
+
+def rankingContainers1(querys, dictionary):
+    querys = [p for p in itertools.product(*querys)]
+    entity = dictionary.keys()
+    pair = [[0.0,0.0,entity[0],"",[]] for x in range(len(entity))]
+    for q in querys:
+        pair = rankingContainers1aux(q, dictionary,pair)
+    return pair
+    
+    
+
+def blocks(query, invertedFile):
+    l = invertedFile.keys()
+    block = {}
+    for i in l:
+        ls = invertedFile[i]
+        t = range(0,len(ls))
+        for j in t:
+            if block.get(abs(ls[j]),None) == None:
+                block[abs(ls[j])] = 0
+    for q in query:
+        if q[0] == '-':
+            aux = q[1:len(q)]
+            l = invertedFile.get(aux,[])
+            l = list(filter(lambda x: x < 0, l))
+        else:
+            l = invertedFile.get(q,[])
+            l = list(filter(lambda x: x > 0, l))
+        for i in l:
+            block[abs(i)] = block[abs(i)] + 1
+    l = block.keys()
+    a = []
+    for b in l:
+        a.append([block[b],b])
+    a = sorted(a)
+    a = reversed(a)
+    a = list(a)
+    b = []
+    for t in a:
+        b.append(t[1])
+    return b
+
+
+querys = [["w","-b","-l"],["d"],["-f","a"]]
+docs = ["a w b, h. a", "a y. u v", "r. t b, f", "d t, b a"]
+invertedFile = [ { "a":[1,-3],"b":[-1],"w":[1],"h":[-2] }, { "a":[1],"y":[1],"u":[2],"v":[-2]  }, { "d":[-1],"t":[-1],"b":[2],"a":[2] } ]
+print(blocks(querys[0],invertedFile[0]))
+fileTotalNumber = 1000
+
+
+
 #############################################################################
 # This method is more reliable because we get this from a book of information
 # retrieval area (Information Retrieval: Implementing and Evaluating Search Engines) 
