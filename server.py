@@ -25,7 +25,7 @@ def rank_comments(data):
     rank = retriever.retrieveContent(query, hotel, comments)
     lock.release()
     rank = map(lambda x : [x, 0, 0], rank)
-    return ranked
+    return rank
 
 def process(post_data):
     data = json.loads(post_data)
