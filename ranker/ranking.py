@@ -1,26 +1,46 @@
-# encoding: utf-8
 import math
 import sys
 
-# function that returns the tdidf weight of a document
 def weightFileTDIDF(word, text, invertedFile, fileTotalNumber, fileRecoveredNumber):
+    """
+    function that returns the tdidf weight of a document
+    \param word String - keyword to produce a weight relationed to it
+    \param text String - tokenized search string (query)
+    \param invertedFile dict - inverted file related to the comment
+    \param fileTotalNumber int - number of comments
+    \param fileRecoveredNumber int - number of retrieved comments
+    \return double - weight related to the word
+    """
     tf = len(invertedFile.get(word,[]))/float(size(invertedFile))
     idf = math.log(fileTotalNumber/fileRecoveredNumber,10);
     tfidf = tf*idf
     return tfidf
 
-# function that calculates the number of words in a document (inverted file)
 def size(invertedFile):
+    """
+    function that calculates the number of words in a document (inverted file)
+    \param invertedFile dict - inverted file related to the comment
+    \return int - size of the inverted file
+    """
     values = invertedFile.values()
     length = map(lambda x: len(x), values)
     length = sum(length)
     return length
 
-# function that returns a vector of a document based on a query 
-# a query with duplicate elements will remove the duplicates to build the vector
-# example query = ["cat","bad","cat","bad"] will return a vector with two elements like [0.30102999566398114, 0.15051499783199057]
-# because the second "cat" and the second "bad" will be eliminated
+
 def vectorFile(query, text, invertedFile, fileTotalNumber, fileRecoveredNumber):
+    """
+    function that returns a vector of a document based on a query.
+    a query with duplicate elements will remove the duplicates to build the vector
+    example query = ["cat","bad","cat","bad"] will return a vector with two elements like [0.30102999566398114, 0.15051499783199057]
+    because the second "cat" and the second "bad" will be eliminated
+    \param query list - list of words that represents the search string 
+    \param text String - tokenized search string (query)
+    \param invertedFile dict - inverted file related to the comment
+    \param fileTotalNumber int - number of comments
+    \param fileRecoveredNumber int - number of retrieved comments
+    \return list - list that represents a vector
+    """
     result = []
     query = removeDuplicates(query)
     for q in query:
@@ -274,50 +294,3 @@ def rankingContainers(query, dictionary):
         pair[i][3] = entity[i]
     pair = sorted(pair)
     return pair
-
- 
-
-# examples to test functions' correctness
-
-word1 = "cat"
-word2 = "bad"
-text = "cat is so cute. cat is cat."
-#       012345678901234567890123456
-invertedFile = {"cat":[0,16,23],"cute":[10]}
-fileTotalNumber = 200
-fileRecoveredNumber = 50
-
-query = ["cat"]
-
-#print (sorted([[2,3],[2,2]]))
-
-
-text2 = "cat is so bute. bute is cute."
-#        012345678901234567890123456
-invertedFile2 =  {"bute": [10,16], "cat":[0],"cute":[24]}
-
-#invertedFile2 = {"size": 4, "invertedFile": {"cat":[0,16,23,32],"cute":[10,14,35,42],"sad":[23,29,38,63]}}
-
-
-v1 = vectorFile(query,text,invertedFile,fileTotalNumber,fileRecoveredNumber)
-v2 = vectorFile(query,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber)
-vf = vectorQuery(query,fileTotalNumber,fileRecoveredNumber)
-'''
-print (weightFileTDIDF(word1,text,invertedFile,fileTotalNumber,fileRecoveredNumber))
-print (weightFileTDIDF(word2,text,invertedFile,fileTotalNumber,fileRecoveredNumber))
-print (vectorFile(query,text,invertedFile,fileTotalNumber,fileRecoveredNumber))
-print (weightFileTDIDF(word1,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber))
-print (weightFileTDIDF(word2,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber))
-print (vectorFile(query,text2,invertedFile2,fileTotalNumber,fileRecoveredNumber))
-print (vectorQuery(query,fileTotalNumber,fileRecoveredNumber))
-print (cos(v1,vf))
-print (cos(v2,vf))
-
-print(rankingDocs(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber,fileRecoveredNumber))
-#print(nextCover(1,1,query,invertedFile2))
-'''
-print (rankingFiles(query,[text,text2],[invertedFile,invertedFile2],fileTotalNumber))
-
-dic = {"h1":{"fileTotalNumber": 5, "comments": {"c1": invertedFile, "c2": invertedFile2, "c6": invertedFile} }, "h2":{"fileTotalNumber": 6, "comments": {"c3": invertedFile, "c4": invertedFile2, "c5": invertedFile2} }}
-
-print (rankingContainers1(query,dic))
